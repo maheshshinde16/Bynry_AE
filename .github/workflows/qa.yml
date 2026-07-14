@@ -1,0 +1,31 @@
+name: QA Automation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      WEB_BASE_URL: ${{ secrets.WEB_BASE_URL }}
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      COMPANY1_EMAIL: ${{ secrets.COMPANY1_EMAIL }}
+      COMPANY1_PASSWORD: ${{ secrets.COMPANY1_PASSWORD }}
+      COMPANY1_API_TOKEN: ${{ secrets.COMPANY1_API_TOKEN }}
+      COMPANY2_EMAIL: ${{ secrets.COMPANY2_EMAIL }}
+      COMPANY2_PASSWORD: ${{ secrets.COMPANY2_PASSWORD }}
+      COMPANY2_API_TOKEN: ${{ secrets.COMPANY2_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: playwright install --with-deps chromium
+      - run: pytest -m "api or smoke"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-artifacts
+          path: artifacts/
