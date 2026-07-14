@@ -53,6 +53,26 @@ The repository implements this approach in tests/ui/test_login.py, framework/pag
 \par
 \b Part 2 - Test Framework Design\b0\par
 \par
+\b Figure 1 - Framework and test-flow overview\b0\par
+\pard\f1\fs18
+Configuration and CI secrets\par
+          |\par
+          v\par
+pytest fixtures (fresh context, API client, cleanup)\par
+          |\par
+          +--> API: create project in Company1 --> UI: verify project card\par
+          |                                        |\par
+          |                                        +--> mobile-web / BrowserStack validation\par
+          |\par
+          +--> Company2 API request --> expect 403 or 404\par
+          |\par
+          +--> diagnostics on failure --> trace, screenshot, video, JUnit XML\par
+          |\par
+          v\par
+cleanup: delete test-created project\par
+\pard\f0\fs24
+The full editable vector version of this figure is included in the repository at docs/framework-and-test-flow.svg.\par
+\par
 \b Proposed structure\b0\par
 \pard\f1\fs18
 framework/\par

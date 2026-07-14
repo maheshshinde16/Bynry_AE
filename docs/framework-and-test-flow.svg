@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="780" viewBox="0 0 1400 780" role="img" aria-labelledby="title desc">
+  <title id="title">QA automation framework and project-creation test flow</title>
+  <desc id="desc">A diagram showing pytest configuration feeding API, web UI, and mobile BrowserStack test paths, followed by tenant isolation and cleanup.</desc>
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #14213d; }
+      .section { font: 700 17px Arial, sans-serif; fill: #ffffff; }
+      .label { font: 600 17px Arial, sans-serif; fill: #14213d; }
+      .small { font: 14px Arial, sans-serif; fill: #334155; }
+      .note { font: 14px Arial, sans-serif; fill: #475569; }
+      .box { stroke: #1e40af; stroke-width: 2; rx: 14; }
+      .arrow { stroke: #475569; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dashed { stroke-dasharray: 7 6; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#475569"/></marker>
+  </defs>
+  <rect width="1400" height="780" fill="#f8fafc"/>
+  <text x="700" y="48" text-anchor="middle" class="title">Multi-tenant QA Automation Framework and Integration Flow</text>
+
+  <rect x="65" y="95" width="250" height="100" class="box" fill="#dbeafe"/>
+  <text x="190" y="132" text-anchor="middle" class="label">Configuration and secrets</text>
+  <text x="190" y="158" text-anchor="middle" class="small">environment, tenant, browser,</text>
+  <text x="190" y="178" text-anchor="middle" class="small">credentials, API token, device</text>
+
+  <rect x="410" y="95" width="250" height="100" class="box" fill="#bfdbfe"/>
+  <text x="535" y="132" text-anchor="middle" class="label">pytest fixtures</text>
+  <text x="535" y="158" text-anchor="middle" class="small">fresh browser context</text>
+  <text x="535" y="178" text-anchor="middle" class="small">API client and cleanup</text>
+  <path d="M315 145 L410 145" class="arrow"/>
+
+  <rect x="770" y="82" width="250" height="125" class="box" fill="#dcfce7"/>
+  <text x="895" y="120" text-anchor="middle" class="label">API layer</text>
+  <text x="895" y="148" text-anchor="middle" class="small">Create project with</text>
+  <text x="895" y="168" text-anchor="middle" class="small">Authorization + X-Tenant-ID</text>
+  <text x="895" y="188" text-anchor="middle" class="small">Validate 201 response</text>
+
+  <rect x="1090" y="82" width="250" height="125" class="box" fill="#fef3c7"/>
+  <text x="1215" y="120" text-anchor="middle" class="label">Web UI layer</text>
+  <text x="1215" y="148" text-anchor="middle" class="small">Playwright page objects</text>
+  <text x="1215" y="168" text-anchor="middle" class="small">Wait for dashboard and</text>
+  <text x="1215" y="188" text-anchor="middle" class="small">verify project card</text>
+  <path d="M660 145 L770 145" class="arrow"/>
+  <path d="M1020 145 L1090 145" class="arrow"/>
+
+  <rect x="205" y="330" width="270" height="125" class="box" fill="#fae8ff"/>
+  <text x="340" y="368" text-anchor="middle" class="label">Mobile-web validation</text>
+  <text x="340" y="396" text-anchor="middle" class="small">390 x 844 touch viewport</text>
+  <text x="340" y="416" text-anchor="middle" class="small">BrowserStack nightly matrix</text>
+  <text x="340" y="436" text-anchor="middle" class="small">iPhone Safari / Android Chrome</text>
+  <path d="M1215 207 C1215 290, 560 280, 475 370" class="arrow dashed"/>
+
+  <rect x="565" y="330" width="270" height="125" class="box" fill="#fee2e2"/>
+  <text x="700" y="368" text-anchor="middle" class="label">Tenant-isolation check</text>
+  <text x="700" y="396" text-anchor="middle" class="small">Company2 requests Company1</text>
+  <text x="700" y="416" text-anchor="middle" class="small">project through API</text>
+  <text x="700" y="436" text-anchor="middle" class="small">Expected result: 403 or 404</text>
+  <path d="M895 207 L720 330" class="arrow"/>
+
+  <rect x="925" y="330" width="270" height="125" class="box" fill="#e0f2fe"/>
+  <text x="1060" y="368" text-anchor="middle" class="label">Diagnostics</text>
+  <text x="1060" y="396" text-anchor="middle" class="small">JUnit XML, trace, screenshot,</text>
+  <text x="1060" y="416" text-anchor="middle" class="small">video, console and API logs</text>
+  <text x="1060" y="436" text-anchor="middle" class="small">retained on failure</text>
+  <path d="M1215 207 L1090 330" class="arrow dashed"/>
+
+  <rect x="550" y="570" width="300" height="105" class="box" fill="#d1fae5"/>
+  <text x="700" y="608" text-anchor="middle" class="label">Cleanup and reporting</text>
+  <text x="700" y="636" text-anchor="middle" class="small">Delete only the project created</text>
+  <text x="700" y="656" text-anchor="middle" class="small">by this run, even after failure</text>
+  <path d="M340 455 L590 570" class="arrow"/>
+  <path d="M700 455 L700 570" class="arrow"/>
+  <path d="M1060 455 L810 570" class="arrow"/>
+
+  <text x="700" y="730" text-anchor="middle" class="note">Solid arrows show the core project-creation path. Dashed arrows show cross-platform validation and failure diagnostics.</text>
+</svg>

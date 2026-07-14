@@ -13,6 +13,7 @@ This repository is Mahesh Shinde's submission for the Bynry QA Automation Engine
 | API-to-UI integration test | [tests/integration/test_project_creation_flow.py](tests/integration/test_project_creation_flow.py) |
 | Example test data | [test_data/projects.json](test_data/projects.json) |
 | Execution-report template | [docs/execution-report.md](docs/execution-report.md) |
+| Framework and test-flow diagram | [docs/framework-and-test-flow.svg](docs/framework-and-test-flow.svg) |
 | CI workflow | [.github/workflows/qa.yml](.github/workflows/qa.yml) |
 | Submission document | [Mahesh_Shinde_Bynry_Case_Study_Submission.rtf](Mahesh_Shinde_Bynry_Case_Study_Submission.rtf) |
 
@@ -53,6 +54,10 @@ python -m venv .venv
 pip install -r requirements.txt
 playwright install
 ```
+
+## Framework and test-flow diagram
+
+![QA automation framework and project-creation flow](docs/framework-and-test-flow.svg)
 
 Copy `.env.example` to `.env` or set the same values in your shell/CI secret store. Never commit real credentials, API tokens, BrowserStack keys, or customer data.
 
