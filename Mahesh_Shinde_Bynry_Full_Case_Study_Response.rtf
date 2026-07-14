@@ -1,0 +1,155 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Calibri;}{\f1 Consolas;}}
+\fs24
+\pard\qc\b\fs32 Bynry QA Automation Engineering Intern\par
+Case Study Response\b0\fs24\par
+\pard\ql\par
+\b Candidate:\b0 Mahesh Shinde\par
+\b Repository:\b0 https://github.com/maheshshinde16/Bynry_AE\par
+\par
+\b Assumptions\b0\par
+\pard\li360
+\bullet\tab A dedicated QA or staging environment, separate from production, is available.\par
+\bullet\tab Dedicated Company1 and Company2 automation accounts exist. Their credentials and API tokens are stored in CI secrets, never in source control.\par
+\bullet\tab Test accounts have an approved non-production 2FA mechanism. Production security is never bypassed.\par
+\bullet\tab The product exposes stable data-testid attributes or accessible names for important UI controls.\par
+\bullet\tab A project created by a test can be deleted through an API endpoint or an approved cleanup process.\par
+\bullet\tab Mobile refers to responsive mobile web. If it means a native app, Appium with BrowserStack App Automate is additionally required.\par
+\pard\li0\par
+\b Part 1 - Debugging Flaky Test Code\b0\par
+\par
+\b Flakiness issues and fixes\b0\par
+\pard\li360
+\bullet\tab The URL is asserted immediately after clicking Login. Authentication and navigation are asynchronous. Fix: wait for the dashboard URL with Playwright's expect(page).to_have_url().\par
+\bullet\tab is_visible() is checked before dynamic dashboard content is ready. Fix: wait for a dashboard-ready element with expect(locator).to_be_visible().\par
+\bullet\tab Project cards are read while the tenant dashboard is still loading. Fix: wait for a projects-list or first project-card locator before inspecting results.\par
+\bullet\tab Generic CSS selectors such as #login-btn and .project-card are brittle. Fix: use role, label, or data-testid locators.\par
+\bullet\tab There is no explicit 2FA strategy. A user who receives an MFA challenge will not reach the dashboard. Fix: use a controlled test identity or approved test OTP service.\par
+\bullet\tab Credentials are hard-coded. Accounts can be locked, changed, or rate-limited. Fix: use dedicated accounts and secret management.\par
+\bullet\tab Each test directly manages browser lifetime. A failed assertion can skip later cleanup. Fix: use pytest yield fixtures so context and browser close reliably.\par
+\bullet\tab Tests are not parameterized for browser or viewport variation. Fix: use a browser/device CI matrix and fresh context for every test.\par
+\bullet\tab Checking only the visible text Company2 is weak tenant validation. Fix: verify a tenant identifier in the UI and use an API authorization test with a second tenant.\par
+\pard\li0\par
+\b Why it happens more in CI than locally\b0\par
+Local machines often have warm caches, fewer competing processes, known browser versions, a consistent screen size, and lower network latency. CI workers can have slower CPU and I/O, cold caches, parallel jobs, browser version differences, different viewports, network delays, and delayed third-party authentication responses. These timing differences expose race conditions caused by immediate assertions. The answer is not arbitrary sleep calls; it is waiting for a meaningful application state.\par
+\par
+\b Corrected Playwright approach (illustrative code)\b0\par
+\pard\f1\fs18
+def login(page, email, password):\par
+    page.goto(BASE_URL + "/login", wait_until="domcontentloaded")\par
+    expect(page.get_by_test_id("login-form")).to_be_visible()\par
+    page.get_by_label("Email").fill(email)\par
+    page.get_by_label("Password").fill(password)\par
+    page.get_by_role("button", name="Sign in").click()\par
+    expect(page).to_have_url(re.compile(r".*/dashboard(?:\\?.*)?$"))\par
+    expect(page.get_by_test_id("dashboard-ready")).to_be_visible()\par
+\par
+def test_company2_tenant_context(page, company2_user):\par
+    login(page, company2_user["email"], company2_user["password"])\par
+    expect(page.get_by_test_id("active-tenant")).to_have_text("Company2")\par
+    expect(page.get_by_test_id("projects-list")).to_be_visible()\par
+\pard\f0\fs24\par
+The repository implements this approach in tests/ui/test_login.py, framework/pages.py, and conftest.py. It uses fixture-based cleanup, configurable timeouts, isolated browser contexts, and device options.\par
+\par
+\b Part 2 - Test Framework Design\b0\par
+\par
+\b Proposed structure\b0\par
+\pard\f1\fs18
+framework/\par
+  settings.py        # Environment and timeout configuration\par
+  api_client.py      # Reusable API request wrapper\par
+  pages.py           # Login and projects page objects\par
+tests/\par
+  api/               # API contract and authorization tests\par
+  ui/                # Web user journeys and role/tenant checks\par
+  integration/       # API-to-UI workflows\par
+test_data/           # Non-sensitive example input data\par
+docs/                # Test plan, approach, and execution report\par
+.github/workflows/   # CI workflow\par
+conftest.py          # pytest fixtures and browser/device options\par
+\pard\f0\fs24\par
+\b Design decisions\b0\par
+\pard\li360
+\bullet\tab pytest provides fixtures, markers, parameterization, test selection, and standard CI reporting.\par
+\bullet\tab Playwright provides browser automation, automatic actionability checks, traces, screenshots, and modern locator APIs.\par
+\bullet\tab Page objects keep selectors and reusable interactions out of business-focused tests.\par
+\bullet\tab An API client centralizes authorization headers, tenant headers, request construction, and response handling.\par
+\bullet\tab Data factories generate unique project names so parallel test runs do not collide.\par
+\bullet\tab Environment values use environment variables and CI secrets; repository configuration contains no real credentials.\par
+\pard\li0\par
+\b Configuration management\b0\par
+The suite reads WEB_BASE_URL, API_BASE_URL, user credentials, API tokens, browser, device, and timeout values from environment variables. Environment-specific values belong in a protected QA/staging secret store. Tests can run with --browser chromium, --browser firefox, or --browser webkit and with desktop or mobile-web viewports. BrowserStack credentials are CI secrets.\par
+\par
+\b Questions to clarify before scaling the framework\b0\par
+\pard\li360
+\bullet\tab Are tenants isolated by subdomain, database, tenant header, or a combination?\par
+\bullet\tab Which browsers, versions, operating systems, and devices are officially supported?\par
+\bullet\tab Is mobile a native app, responsive web, or both?\par
+\bullet\tab Is there a resettable QA environment and a supported test-data cleanup API?\par
+\bullet\tab How should test users complete 2FA safely?\par
+\bullet\tab Are project creation and search eventually consistent or asynchronous?\par
+\bullet\tab What are the allowed parallelism, execution-time budget, reporting format, and release gates?\par
+\bullet\tab Which third-party integrations should be mocked in lower environments versus tested end-to-end?\par
+\pard\li0\par
+\b CI/CD and BrowserStack strategy\b0\par
+Run API tests and a small Chromium smoke suite on every pull request. Run a risk-based BrowserStack matrix nightly: Chrome on Windows, Firefox on Windows, Safari on macOS, iPhone Safari, and Android Chrome. Retain JUnit XML, traces, screenshots, video, console logs, and failed API responses for failures. This preserves useful cross-platform coverage without running every scenario on every device for every pull request.\par
+\par
+\b Part 3 - API + UI Integration Test\b0\par
+\par
+\b Test strategy\b0\par
+The integration flow creates a uniquely named project through the Company1 API, verifies that it is visible in Company1's web UI, validates the responsive mobile-web view, verifies that Company2 cannot retrieve it through the API, and removes the project in a finally block. A fresh browser context is used for each user session to prevent cookies or local storage from leaking between tenants.\par
+\par
+\b Integration test (illustrative code)\b0\par
+\pard\f1\fs18
+@pytest.mark.integration\par
+@pytest.mark.tenant_isolation\par
+def test_project_creation_flow(page, api_client, company1_user, company2_user):\par
+    payload = \{\par
+        "name": f"integration-project-{uuid.uuid4().hex[:8]}",\par
+        "description": "Created by automated integration test",\par
+        "team_members": [],\par
+    \}\par
+    project_id = None\par
+    try:\par
+        # 1. API: create project in Company1\par
+        create = api_client.create_project(\par
+            company1_user["token"], company1_user["tenant"], payload\par
+        )\par
+        assert create.status == 201, create.text()\par
+        project_id = create.json()["id"]\par
+\par
+        # 2. Web UI: verify Company1 can see the new project\par
+        login(page, company1_user["email"], company1_user["password"])\par
+        open_projects(page)\par
+        card = page.get_by_test_id(f"project-card-{project_id}")\par
+        expect(card).to_be_visible()\par
+        expect(card).to_contain_text(payload["name"])\par
+        expect(card).to_have_attribute("data-tenant-id", "company1")\par
+\par
+        # 3. Mobile: run the same test using --device mobile-web\par
+        # The fixture uses a 390x844 touch viewport for this execution.\par
+\par
+        # 4. Security: Company2 must not access Company1's project\par
+        denied = api_client.get_project(\par
+            company2_user["token"], company2_user["tenant"], project_id\par
+        )\par
+        assert denied.status in (403, 404)\par
+    finally:\par
+        if project_id is not None:\par
+            cleanup = api_client.delete_project(\par
+                company1_user["token"], company1_user["tenant"], project_id\par
+            )\par
+            assert cleanup.status in (200, 204), cleanup.text()\par
+\pard\f0\fs24\par
+\b Test-data and edge-case handling\b0\par
+\pard\li360
+\bullet\tab Each project gets a UUID-based name so data remains unique when tests execute in parallel.\par
+\bullet\tab Cleanup happens in finally, including when a validation fails. A scheduled cleanup job is a second safeguard.\par
+\bullet\tab API response status and payload are asserted immediately after creation, producing a useful failure message for network, authorization, or validation errors.\par
+\bullet\tab UI checks wait for stable business-ready elements, not time delays. If project indexing is eventually consistent, the product should expose a defined ready signal or the test should poll only the specific project endpoint for a bounded period.\par
+\bullet\tab Failed tests should collect traces, screenshots, video, browser console logs, and failed network responses.\par
+\bullet\tab For native mobile apps, replace the responsive-browser fixture with Appium sessions on BrowserStack App Automate while retaining the same API setup and tenant-isolation assertions.\par
+\pard\li0\par
+\b Final note\b0\par
+The repository contains the runnable implementation, test plan, example data, CI workflow, and execution-report template. Tests are not represented as run against Bynry systems because approved URLs, credentials, test data, and selectors were not available. This is deliberate: test results should never be fabricated.\par
+}
